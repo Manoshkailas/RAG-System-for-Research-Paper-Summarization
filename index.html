@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScholarRAG | Academic Paper Summariser & Research Assistant</title>
+  <meta name="description" content="AI-Powered Academic Paper Summariser using RAG and LLMs. Ingest PDFs, extract key contributions, ask questions, compare papers, and inspect citations.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">
+          <h1>ScholarRAG</h1>
+          <span>Academic Paper Intelligence</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="tab-summary">
+          <span class="icon">📄</span> Paper Summariser
+        </button>
+        <button class="nav-item" data-tab="tab-qa">
+          <span class="icon">💬</span> Interactive Q&A
+        </button>
+        <button class="nav-item" data-tab="tab-compare">
+          <span class="icon">⚖️</span> Side-by-Side Comparison
+        </button>
+        <button class="nav-item" data-tab="tab-chunks">
+          <span class="icon">🔍</span> Chunk & Citation Inspector
+        </button>
+      </nav>
+
+      <div class="sidebar-status">
+        <div class="status-header">
+          <span class="status-dot"></span>
+          <span>RAG System Active</span>
+        </div>
+        <div class="paper-badge" id="activePaperBadge">No Paper Loaded</div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Header Bar -->
+      <header class="top-header">
+        <div class="header-title">
+          <h2 id="headerTitle">Academic Paper Summariser</h2>
+          <p id="headerSubtitle">Upload research PDFs to extract abstract, key contributions, methods, and results using RAG.</p>
+        </div>
+
+        <div class="upload-btn-wrapper">
+          <label for="pdfUploadInput" class="btn btn-primary" id="uploadLabel">
+            <span class="icon">📤</span> Upload PDF Paper
+          </label>
+          <input type="file" id="pdfUploadInput" accept=".pdf" style="display: none;">
+        </div>
+      </header>
+
+      <!-- TAB 1: SUMMARY & INGESTION -->
+      <section id="tab-summary" class="tab-page active">
+        <!-- Drag & Drop Upload Banner -->
+        <div class="upload-dropzone" id="dropZone">
+          <div class="dropzone-icon">📁</div>
+          <h3>Drag & Drop Research Paper (PDF) Here</h3>
+          <p>Or click to select file from your machine</p>
+          <span class="dropzone-hint">Supports PyPDF & PyMuPDF extraction with Section-Aware Chunking</span>
+        </div>
+
+        <div class="loading-overlay" id="summaryLoader" style="display: none;">
+          <div class="spinner"></div>
+          <p>Extracting Sections & Embedding Chunks into Vector Store...</p>
+        </div>
+
+        <!-- Summary Output View -->
+        <div class="summary-container" id="summaryContainer" style="display: none;">
+          <div class="paper-meta-card glass-card">
+            <div class="meta-header">
+              <div>
+                <span class="badge badge-accent" id="paperTag">PDF Document</span>
+                <h2 class="paper-title" id="paperTitle">Paper Title</h2>
+                <div class="paper-stats" id="paperStats">Pages: 0 | Chunks: 0</div>
+              </div>
+              <div class="export-actions">
+                <button class="btn btn-secondary" id="btnExportMD">⬇️ Export Markdown</button>
+                <button class="btn btn-secondary" id="btnExportJSON">⬇️ Export JSON</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2col">
+            <!-- Abstract Overview -->
+            <div class="glass-card">
+              <div class="card-header">
+                <h3>📌 Abstract Overview</h3>
+              </div>
+              <p class="card-text" id="abstractText">No abstract available.</p>
+            </div>
+
+            <!-- Key Contributions -->
+            <div class="glass-card">
+              <div class="card-header">
+                <h3>🚀 Key Contributions</h3>
+              </div>
+              <ul class="contributions-list" id="contributionsList">
+                <li>No contributions extracted yet.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="grid-3col">
+            <!-- Methodology -->
+            <div class="glass-card">
+              <div class="card-header">
+                <h3>🔬 Methodology & Architecture</h3>
+              </div>
+              <p class="card-text" id="methodologyText">Extraction pending.</p>
+            </div>
+
+            <!-- Results -->
+            <div class="glass-card">
+              <div class="card-header">
+                <h3>📊 Results & Benchmark Findings</h3>
+              </div>
+              <p class="card-text" id="resultsText">Extraction pending.</p>
+            </div>
+
+            <!-- Limitations -->
+            <div class="glass-card">
+              <div class="card-header">
+                <h3>⚠️ Limitations & Constraints</h3>
+              </div>
+              <p class="card-text" id="limitationsText">Extraction pending.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: INTERACTIVE Q&A -->
+      <section id="tab-qa" class="tab-page">
+        <div class="glass-card qa-container">
+          <div class="card-header">
+            <h3>💬 RAG Question Answering</h3>
+            <p>Query specific facts, math formulas, dataset details, or algorithms from ingested papers.</p>
+          </div>
+
+          <div class="chat-history" id="chatHistory">
+            <div class="chat-message bot">
+              <div class="message-sender">ScholarRAG Bot</div>
+              <div class="message-body">Ask me anything about the ingested paper! I'll retrieve relevant chunks and cite exact sections.</div>
+            </div>
+          </div>
+
+          <div class="chat-input-row">
+            <input type="text" id="qaInput" placeholder="e.g., What baseline datasets were used in the evaluation?" autocomplete="off">
+            <button class="btn btn-primary" id="btnSendQA">Send Query</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: SIDE-BY-SIDE PAPER COMPARISON -->
+      <section id="tab-compare" class="tab-page">
+        <div class="glass-card">
+          <div class="card-header">
+            <h3>⚖️ Compare Two Academic Papers</h3>
+            <p>Select two uploaded papers to contrast their methods, results, and recommendations.</p>
+          </div>
+
+          <div class="comparison-selectors">
+            <div class="select-group">
+              <label>Paper A:</label>
+              <select id="selectPaperA" class="form-select"></select>
+            </div>
+            <div class="select-group">
+              <label>Paper B:</label>
+              <select id="selectPaperB" class="form-select"></select>
+            </div>
+            <button class="btn btn-primary" id="btnCompare">Compare Papers</button>
+          </div>
+
+          <div class="comparison-results" id="comparisonResults" style="display: none;">
+            <div class="grid-2col" style="margin-top: 20px;">
+              <div class="glass-card card-sm">
+                <h4>🎯 Problem Comparison</h4>
+                <p id="compProblem">-</p>
+              </div>
+              <div class="glass-card card-sm">
+                <h4>🔬 Methodology Contrast</h4>
+                <p id="compMethodology">-</p>
+              </div>
+            </div>
+
+            <div class="grid-2col" style="margin-top: 15px;">
+              <div class="glass-card card-sm">
+                <h4>📊 Performance & Findings</h4>
+                <p id="compResults">-</p>
+              </div>
+              <div class="glass-card card-sm">
+                <h4>💡 Trade-offs & Recommendation</h4>
+                <p id="compRecommendation">-</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: CHUNK & CITATION INSPECTOR -->
+      <section id="tab-chunks" class="tab-page">
+        <div class="glass-card">
+          <div class="card-header">
+            <h3>🔍 Vector Chunks & Section Tag Tracer</h3>
+            <p>Inspect how the document was parsed into section-aware vector chunks for RAG retrieval.</p>
+          </div>
+
+          <div class="chunk-list" id="chunksContainer">
+            <p class="text-muted">No paper loaded yet. Upload a paper to view its vector index.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
